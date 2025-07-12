@@ -160,3 +160,49 @@ function patchLogin()
     $jwt = JWT::encode($payload, JWT_KEY);
     output(['jwt'=>$jwt]);
 }
+
+function postUsuarios()
+{
+    $data = json_decode(file_get_contents("php://input"), true);
+    $nombre = $data['nombre'];
+    $email = $data['email'];
+    $clave = $data['clave'];
+
+    $link = conectarBD();
+    $nombre = mysqli_real_escape_string($link, $nombre);
+    $email = mysqli_real_escape_string($link, $email);
+    $clave = mysqli_real_escape_string($link, $clave);
+
+    $sql = "INSERT INTO usuarios (nombre_completo, email, clave) VALUES ('$nombre', '$email', '$clave')";
+    $resultado = mysqli_query($link, $sql);
+
+    if ($resultado) {
+        output(['mensaje' => 'Usuario creado correctamente']);
+    } else {
+        outputError(500);
+    }
+}
+
+function postRegister()
+{
+    $data = json_decode(file_get_contents("php://input"), true);
+    $nombre = $data['nombre'];
+    $email = $data['email'];
+    $clave = $data['clave'];
+
+    $link = conectarBD();
+    $nombre = mysqli_real_escape_string($link, $nombre);
+    $email = mysqli_real_escape_string($link, $email);
+    $clave = mysqli_real_escape_string($link, $clave);
+
+    $sql = "INSERT INTO usuarios (nombre_completo, email, clave) VALUES ('$nombre', '$email', '$clave')";
+    $ok = mysqli_query($link, $sql);
+
+    if ($ok) {
+        output(['mensaje' => 'Usuario registrado correctamente']);
+    } else {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+}
