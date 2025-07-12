@@ -206,3 +206,51 @@ function postRegister()
 
     mysqli_close($link);
 }
+
+function getPublicaciones() {
+    $link = conectarBD();
+
+    $sql = "SELECT p.id, p.titulo, p.contenido, p.fecha, u.nombre_completo AS autor
+            FROM publicaciones p
+            JOIN usuarios u ON p.usuario_id = u.id
+            ORDER BY p.fecha DESC";
+
+    $resultado = mysqli_query($link, $sql);
+    if ($resultado === false) {
+        outputError(500);
+    }
+
+    $publicaciones = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+        $publicaciones[] = $fila;
+    }
+
+    mysqli_free_result($resultado);
+    mysqli_close($link);
+
+    output($publicaciones);
+}
+
+function postPublicaciones() {
+    $payload = requiereLogin();
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    if (!isset($data['titulo']) || !isset($data['contenido'])) {
+        outputError(400);
+    }
+
+    $link = conectarBD();
+    $titulo = mysqli_real_escape_string($link, $data['titulo']);
+    $contenido = mysqli_real_escape_string($link, $data['contenido']);
+    $usuario_id = $payload->uid;
+
+    $sql = "INSERT INTO publicaciones (usuario_id, titulo, contenido, fecha)
+            VALUES ($usuario_id, '$titulo', '$contenido', NOW())";
+
+    if (!mysqli_query($link, $sql)) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['mensaje' => 'Publicación creada correctamente']);
+}

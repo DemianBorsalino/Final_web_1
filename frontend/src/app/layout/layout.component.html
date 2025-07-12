@@ -21,6 +21,11 @@
           <a (click)="logout()" class="nav-link" style="cursor:pointer">Cerrar sesión</a>
         </li>
       </ng-container>
+        <ng-container *ngIf="authService.estaAutenticado()">
+        <li class="nav-item">
+          <a routerLink="/perfil" class="nav-link">Mi Perfil</a>
+        </li>
+        </ng-container>
     </ul>
   </div>
 </nav>

@@ -1,0 +1,29 @@
+<h2>Publicaciones</h2>
+
+<form (ngSubmit)="agregarPublicacion()" [formGroup]="formulario">
+  <div class="mb-3">
+    <label for="titulo" class="form-label">Título</label>
+    <input id="titulo" type="text" class="form-control" formControlName="titulo">
+  </div>
+  <div class="mb-3">
+    <label for="contenido" class="form-label">Contenido</label>
+    <textarea id="contenido" class="form-control" formControlName="contenido"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Agregar publicación</button>
+</form>
+
+<hr>
+
+<div *ngIf="publicaciones.length > 0; else noData">
+  <div *ngFor="let pub of publicaciones" class="card my-3">
+    <div class="card-body">
+      <h5 class="card-title">{{ pub.titulo }}</h5>
+      <p class="card-text">{{ pub.contenido }}</p>
+      <small class="text-muted">Por: {{ pub.nombre_usuario }}</small>
+    </div>
+  </div>
+</div>
+
+<ng-template #noData>
+  <p>No hay publicaciones todavía.</p>
+</ng-template>
