@@ -1,17 +1,17 @@
 <h2>Publicaciones</h2>
-
-<form (ngSubmit)="agregarPublicacion()" [formGroup]="formulario">
-  <div class="mb-3">
-    <label for="titulo" class="form-label">Título</label>
-    <input id="titulo" type="text" class="form-control" formControlName="titulo">
-  </div>
-  <div class="mb-3">
-    <label for="contenido" class="form-label">Contenido</label>
-    <textarea id="contenido" class="form-control" formControlName="contenido"></textarea>
-  </div>
-  <button type="submit" class="btn btn-primary">Agregar publicación</button>
-</form>
-
+<div *ngIf="authService.estaAutenticado(); else noAutenticado">
+  <form (ngSubmit)="agregarPublicacion()" [formGroup]="formulario">
+    <div class="mb-3">
+      <label for="titulo" class="form-label">Título</label>
+      <input id="titulo" type="text" class="form-control" formControlName="titulo">
+    </div>
+    <div class="mb-3">
+      <label for="contenido" class="form-label">Contenido</label>
+      <textarea id="contenido" class="form-control" formControlName="contenido"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Agregar publicación</button>
+  </form>
+</div>
 <hr>
 
 <div *ngIf="publicaciones.length > 0; else noData">
@@ -19,11 +19,17 @@
     <div class="card-body">
       <h5 class="card-title">{{ pub.titulo }}</h5>
       <p class="card-text">{{ pub.contenido }}</p>
-      <small class="text-muted">Por: {{ pub.nombre_usuario }}</small>
+      <small class="text-muted">Por: {{ pub.autor }}</small>
     </div>
   </div>
 </div>
 
 <ng-template #noData>
   <p>No hay publicaciones todavía.</p>
+</ng-template>
+
+<ng-template #noAutenticado>
+  <p class="alert alert-warning mt-3">
+    Debes iniciar sesión para agregar una publicación.
+  </p>
 </ng-template>

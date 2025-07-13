@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-publicaciones',
@@ -14,7 +15,7 @@ export class PublicacionesComponent {
   formulario: FormGroup;
   publicaciones: any[] = [];
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {
+  constructor(private fb: FormBuilder, private http: HttpClient, public authService: AuthService ) {
     this.formulario = this.fb.group({
       titulo: [''],
       contenido: ['']
@@ -31,18 +32,21 @@ export class PublicacionesComponent {
       });
   }
 
-  agregarPublicacion() {
-    const token = localStorage.getItem('jwt');
-    if (!token) return;
+ agregarPublicacion() {
+  const token = localStorage.getItem('jwt');
+  if (!token) return;
 
-    const headers = { Authorization: 'Bearer ' + token };
-    this.http.post(environment.apiurl + 'publicaciones', this.formulario.value, { headers })
-      .subscribe({
-        next: () => {
-          this.formulario.reset();
-          this.cargarPublicaciones();
-        },
-        error: (err) => console.error('Error al agregar publicación', err)
-      });
-  }
+  const headers = { Authorization: 'Bearer ' + token };
+  this.http.post(environment.apiurl + 'publicaciones', this.formulario.value, { headers })
+    .subscribe({
+      next: () => {
+        this.formulario.reset();
+        this.cargarPublicaciones();
+      },
+      error: (err) => {
+        console.error('Error al agregar publicación', err);
+        alert('Error al publicar: ' + (err.error?.mensaje || err.message || 'Error desconocido'));
+      }
+    });
+}
 }

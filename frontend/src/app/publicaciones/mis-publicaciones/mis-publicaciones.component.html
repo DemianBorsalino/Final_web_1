@@ -1,0 +1,14 @@
+<h2>Mis publicaciones</h2>
+
+<div *ngIf="publicaciones.length > 0; else noData">
+  <div *ngFor="let pub of publicaciones" class="card my-3">
+    <div class="card-body">
+      <h5 class="card-title">{{ pub.titulo }}</h5>
+      <p class="card-text">{{ pub.contenido }}</p>
+    </div>
+  </div>
+</div>
+
+<ng-template #noData>
+  <p class="alert alert-info">Aún no has publicado nada.</p>
+</ng-template>

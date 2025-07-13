@@ -161,6 +161,53 @@ function patchLogin()
     output(['jwt'=>$jwt]);
 }
 
+function getUsuarios()
+{
+    $link = conectarBD();
+    $sql = "SELECT id, email, nombre_completo FROM usuarios";
+    $resultado = mysqli_query($link, $sql);
+
+    $usuarios = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+        $id_usuario = $fila['id'];
+
+        // Obtener publicaciones de este usuario
+        $sqlPub = "SELECT id FROM publicaciones WHERE usuario_id = $id_usuario";
+        $resPub = mysqli_query($link, $sqlPub);
+        $publicaciones = [];
+
+        while ($pub = mysqli_fetch_assoc($resPub)) {
+            $publicaciones[] = $pub;
+        }
+
+        $fila['publicaciones'] = $publicaciones;
+        $usuarios[] = $fila;
+    }
+
+    mysqli_free_result($resultado);
+    mysqli_close($link);
+
+    output($usuarios);
+}
+
+function getUsuario($id) {
+    $link = conectarBD();
+    $id = mysqli_real_escape_string($link, $id);
+
+    $sql = "SELECT id, email, nombre_completo FROM usuarios WHERE id = $id";
+    $res = mysqli_query($link, $sql);
+
+    if ($fila = mysqli_fetch_assoc($res)) {
+        output($fila);
+    } else {
+        outputError(404, "Usuario no encontrado");
+    }
+
+    mysqli_free_result($res);
+    mysqli_close($link);
+}
+
+
 function postUsuarios()
 {
     $data = json_decode(file_get_contents("php://input"), true);
@@ -232,25 +279,75 @@ function getPublicaciones() {
 }
 
 function postPublicaciones() {
-    $payload = requiereLogin();
+    $payload = requiereLogin(); 
     $data = json_decode(file_get_contents("php://input"), true);
-
-    if (!isset($data['titulo']) || !isset($data['contenido'])) {
-        outputError(400);
-    }
+    $titulo = $data['titulo'] ?? '';
+    $contenido = $data['contenido'] ?? '';
+    $id_usuario = $payload->uid;
 
     $link = conectarBD();
-    $titulo = mysqli_real_escape_string($link, $data['titulo']);
-    $contenido = mysqli_real_escape_string($link, $data['contenido']);
-    $usuario_id = $payload->uid;
+    $titulo = mysqli_real_escape_string($link, $titulo);
+    $contenido = mysqli_real_escape_string($link, $contenido);
 
-    $sql = "INSERT INTO publicaciones (usuario_id, titulo, contenido, fecha)
-            VALUES ($usuario_id, '$titulo', '$contenido', NOW())";
-
+    $sql = "INSERT INTO publicaciones (titulo, contenido, usuario_id) VALUES ('$titulo', '$contenido', $id_usuario)";
     if (!mysqli_query($link, $sql)) {
+        // Eliminá cualquier echo, y usá solo esto para errores
         outputError(500);
     }
 
     mysqli_close($link);
-    output(['mensaje' => 'Publicación creada correctamente']);
+
+    // 🔥 Asegurate de que esto esté limpio
+    output(['success' => true]);
+}
+
+function getPublicacionesUsuario()
+{
+    $payload = requiereLogin();
+    $usuario_id = $payload->uid;
+
+    $link = conectarBD();
+    $usuario_id = mysqli_real_escape_string($link, $usuario_id);
+
+    $sql = "SELECT p.id, p.titulo, p.contenido, u.nombre_completo AS nombre_usuario
+            FROM publicaciones p
+            JOIN usuarios u ON p.usuario_id = u.id
+            WHERE p.usuario_id = '$usuario_id'
+            ORDER BY p.id DESC";
+
+    $resultado = mysqli_query($link, $sql);
+    if ($resultado === false) {
+        outputError(500);
+    }
+
+    $publicaciones = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+        $publicaciones[] = $fila;
+    }
+
+    mysqli_free_result($resultado);
+    mysqli_close($link);
+    output($publicaciones);
+}
+
+function getMisPublicaciones() {
+    $payload = requiereLogin();
+    $id_usuario = $payload->uid;
+
+    $link = conectarBD();
+    $sql = "SELECT p.*, u.nombre_completo AS nombre_usuario
+            FROM publicaciones p
+            JOIN usuarios u ON p.id_usuario = u.id
+            WHERE p.id_usuario = $id_usuario
+            ORDER BY p.id DESC";
+    $res = mysqli_query($link, $sql);
+
+    $data = [];
+    while ($fila = mysqli_fetch_assoc($res)) {
+        $data[] = $fila;
+    }
+
+    mysqli_free_result($res);
+    mysqli_close($link);
+    output($data);
 }

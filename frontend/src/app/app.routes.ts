@@ -6,6 +6,7 @@ import { HomeComponent } from './home/home.component';
 import { PerfilComponent } from './perfil/perfil.component';
 import { authGuard } from './guards/auth.guard';
 import { PublicacionesComponent } from './publicaciones/publicaciones.component';
+import { MisPublicacionesComponent } from './publicaciones/mis-publicaciones/mis-publicaciones.component';
 
 export const routes: Routes = [
   {
@@ -16,7 +17,8 @@ export const routes: Routes = [
       { path: 'login', component: LoginComponent },
       { path: 'register', component: RegisterComponent },
       { path: 'perfil', component: PerfilComponent, canActivate: [authGuard] },
-      { path: 'publicaciones', component: PublicacionesComponent }
+      { path: 'publicaciones', component: PublicacionesComponent },
+      { path: 'mis-publicaciones', component: MisPublicacionesComponent, canActivate: [authGuard] }
     ]
   }
 ];
