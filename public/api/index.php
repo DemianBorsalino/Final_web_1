@@ -257,7 +257,7 @@ function postRegister()
 function getPublicaciones() {
     $link = conectarBD();
 
-    $sql = "SELECT p.id, p.titulo, p.contenido, p.fecha, u.nombre_completo AS autor
+    $sql = "SELECT p.id, p.titulo, p.contenido, p.fecha, p.usuario_id, u.nombre_completo AS autor
             FROM publicaciones p
             JOIN usuarios u ON p.usuario_id = u.id
             ORDER BY p.fecha DESC";
@@ -350,4 +350,44 @@ function getMisPublicaciones() {
     mysqli_free_result($res);
     mysqli_close($link);
     output($data);
+}
+
+function patchPublicaciones($id) {
+    $payload = requiereLogin();
+    $data = json_decode(file_get_contents("php://input"), true);
+    $titulo = $data['titulo'] ?? '';
+    $contenido = $data['contenido'] ?? '';
+
+    $link = conectarBD();
+    $titulo = mysqli_real_escape_string($link, $titulo);
+    $contenido = mysqli_real_escape_string($link, $contenido);
+    $id = mysqli_real_escape_string($link, $id);
+    $usuario_id = $payload->uid;
+
+    $sql = "UPDATE publicaciones SET titulo='$titulo', contenido='$contenido'
+            WHERE id=$id AND usuarios_id=$usuario_id";
+
+    if (!mysqli_query($link, $sql)) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+}
+
+function deletePublicaciones($id) {
+    $payload = requiereLogin();
+    $id = mysqli_real_escape_string(conectarBD(), $id);
+    $usuario_id = $payload->uid;
+
+    $link = conectarBD();
+    $sql = "DELETE FROM publicaciones WHERE id=$id AND usuarios_id=$usuario_id";
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
 }

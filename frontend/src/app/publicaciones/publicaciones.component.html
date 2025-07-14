@@ -9,7 +9,12 @@
       <label for="contenido" class="form-label">Contenido</label>
       <textarea id="contenido" class="form-control" formControlName="contenido"></textarea>
     </div>
-    <button type="submit" class="btn btn-primary">Agregar publicación</button>
+    <button type="submit" class="btn btn-primary">
+      {{ editarId ? 'Guardar cambios' : 'Agregar publicación' }}
+    </button>
+    <button *ngIf="editarId" type="button" class="btn btn-secondary ms-2" (click)="cancelarEdicion()">
+      Cancelar edición
+    </button>
   </form>
 </div>
 <hr>
@@ -20,9 +25,15 @@
       <h5 class="card-title">{{ pub.titulo }}</h5>
       <p class="card-text">{{ pub.contenido }}</p>
       <small class="text-muted">Por: {{ pub.autor }}</small>
+      <ng-container *ngIf="authService.obtenerDatosUsuario()?.uid === pub.usuario_id">
+        <button class="btn btn-sm btn-warning me-2" (click)="editarPublicacion(pub)">Editar</button>
+        <button class="btn btn-sm btn-danger" (click)="eliminarPublicacion(pub.id)">Eliminar</button>
+      </ng-container>
     </div>
   </div>
 </div>
+
+
 
 <ng-template #noData>
   <p>No hay publicaciones todavía.</p>
