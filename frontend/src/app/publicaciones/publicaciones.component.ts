@@ -4,11 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
+import { ComentarioComponent } from '../comentario/comentario.component';
 
 @Component({
   selector: 'app-publicaciones',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ComentarioComponent],
   templateUrl: './publicaciones.component.html',
 })
 export class PublicacionesComponent {

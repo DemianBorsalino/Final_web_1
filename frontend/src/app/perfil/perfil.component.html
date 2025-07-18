@@ -1,2 +1,54 @@
 <h2>Perfil del usuario</h2>
 <p>Bienvenido, esta es tu área privada.</p>
+
+<div *ngIf="usuario">
+  <img [src]="'http://localhost/miproyecto/adicional/' + usuario.foto_perfil" 
+       width="120" height="120" 
+       alt="Foto de perfil" 
+       style="border-radius: 50%; border: 2px solid #ccc; margin-bottom: 1em;">
+
+  <p><strong>Nombre completo:</strong> {{ usuario.nombre_completo }}</p>
+  <p><strong>Email:</strong> {{ usuario.email }}</p>
+
+  <p *ngIf="usuario.descripcion"><strong>Descripción:</strong><br> {{ usuario.descripcion }}</p>
+  <p *ngIf="!usuario.descripcion"><em>No has agregado una descripción aún.</em></p>
+</div>
+
+<h4>Editar perfil</h4>
+<form (ngSubmit)="guardarCambios()" *ngIf="usuario">
+  <label>
+    Nombre completo:
+    <input type="text" [(ngModel)]="usuario.nombre_completo" name="nombre" required />
+  </label>
+  <br>
+
+  <label>
+    Descripción:
+    <textarea [(ngModel)]="usuario.descripcion" name="descripcion"></textarea>
+  </label>
+  <br>
+
+  <label>
+    Foto de perfil:
+    <input type="file" (change)="seleccionarImagen($event)" />
+  </label>
+  <br>
+
+  <button type="submit">Guardar cambios</button>
+</form>
+
+
+<hr>
+
+<h4>Tus publicaciones</h4>
+<ul *ngIf="publicaciones.length > 0; else noPub">
+  <li *ngFor="let pub of publicaciones" style="margin-bottom: 1em;">
+    <strong>{{ pub.titulo }}</strong><br>
+    {{ pub.contenido }}
+    <hr>
+  </li>
+</ul>
+
+<ng-template #noPub>
+  <p>No has creado publicaciones aún.</p>
+</ng-template>

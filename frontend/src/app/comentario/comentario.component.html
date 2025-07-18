@@ -1,0 +1,27 @@
+<div>
+  <h5>Comentarios</h5>
+
+  <ul *ngIf="comentarios.length > 0; else sinComentarios">
+    <li *ngFor="let c of comentarios">
+      <strong>{{ c.autor }}</strong>: {{ c.contenido }}
+      <small>({{ c.fecha | date:'short' }})</small>
+
+      <!-- Botón eliminar solo visible si el comentario es del usuario -->
+      <button *ngIf="c.id_usuario === authService.obtenerDatosUsuario()?.uid"
+              (click)="eliminarComentario(c.id)">
+        Eliminar
+      </button>
+    </li>
+  </ul>
+
+  <ng-template #sinComentarios>
+    <p>Aún no hay comentarios.</p>
+  </ng-template>
+
+  <!-- Formulario de comentario -->
+  <div *ngIf="tieneToken">
+    <textarea [(ngModel)]="nuevoComentario" placeholder="Escribe un comentario"></textarea>
+    <button (click)="agregarComentario()">Comentar</button>
+  </div>
+</div>
+

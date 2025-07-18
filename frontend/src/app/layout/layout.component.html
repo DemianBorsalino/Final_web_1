@@ -5,27 +5,28 @@
       <li class="nav-item">
         <a routerLink="/" class="nav-link">Inicio</a>
       </li>
-      <ng-container *ngIf="!authService.estaAutenticado()">
         <li class="nav-item">
-          <a routerLink="/login" class="nav-link">Login</a>
+          <a routerLink="/publicaciones" class="nav-link">Publicaciones</a>
         </li>
-        <li class="nav-item">
-          <a routerLink="/register" class="nav-link">Registrarse</a>
-        </li>
-      </ng-container>
       <ng-container *ngIf="authService.estaAutenticado()">
+      <!--  <li class="nav-item">
+          <a routerLink="/perfil" class="nav-link">Mi Perfil</a>
+        </li> -->
         <li class="nav-item">
-          <span class="nav-link">Hola, {{ nombreUsuario }}</span>
+          <a routerLink="/perfil" class="nav-link">{{ nombreUsuario }}</a>
         </li>
         <li class="nav-item">
           <a (click)="logout()" class="nav-link" style="cursor:pointer">Cerrar sesión</a>
         </li>
       </ng-container>
-        <ng-container *ngIf="authService.estaAutenticado()">
+      <ng-container *ngIf="!authService.estaAutenticado()">
         <li class="nav-item">
-          <a routerLink="/perfil" class="nav-link">Mi Perfil</a>
+          <a routerLink="/login" class="nav-link">Iniciar sesión</a>
         </li>
-        </ng-container>
+        <li class="nav-item">
+          <a routerLink="/registro" class="nav-link">Registrarse</a>
+        </li>
+      </ng-container>
     </ul>
   </div>
 </nav>

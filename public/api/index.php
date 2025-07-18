@@ -133,7 +133,20 @@ function getSysinfo()
 function getPerfil()
 {
     $payload = requiereLogin();
-    output(['id' => $payload->uid, 'nombre' => $payload->nombre]);
+    $id = $payload->uid;
+
+    $link = conectarBD();
+    $sql = "SELECT id, nombre_completo, email, descripcion, foto_perfil FROM usuarios WHERE id = $id";
+    $res = mysqli_query($link, $sql);
+
+    if ($fila = mysqli_fetch_assoc($res)) {
+        output($fila);
+    } else {
+        outputError(404, "Usuario no encontrado");
+    }
+
+    mysqli_free_result($res);
+    mysqli_close($link);
 }
 
 function postLogin()
@@ -164,7 +177,7 @@ function patchLogin()
 function getUsuarios()
 {
     $link = conectarBD();
-    $sql = "SELECT id, email, nombre_completo FROM usuarios";
+    $sql = "SELECT id, email, nombre_completo, foto_perfil, descripcion FROM usuarios";
     $resultado = mysqli_query($link, $sql);
 
     $usuarios = [];
@@ -194,7 +207,7 @@ function getUsuario($id) {
     $link = conectarBD();
     $id = mysqli_real_escape_string($link, $id);
 
-    $sql = "SELECT id, email, nombre_completo FROM usuarios WHERE id = $id";
+    $sql = "SELECT id, email, nombre_completo, foto_perfil, descripcion FROM usuarios WHERE id = $id";
     $res = mysqli_query($link, $sql);
 
     if ($fila = mysqli_fetch_assoc($res)) {
@@ -230,6 +243,32 @@ function postUsuarios()
     }
 }
 
+function patchUsuario() {
+    $payload = requiereLogin();
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $nombre = $data['nombre_completo'] ?? '';
+    $descripcion = $data['descripcion'] ?? '';
+    $foto = $data['foto_perfil'] ?? '';
+
+    $link = conectarBD();
+    $nombre = mysqli_real_escape_string($link, $nombre);
+    $descripcion = mysqli_real_escape_string($link, $descripcion);
+    $foto = mysqli_real_escape_string($link, $foto);
+    $usuario_id = $payload->uid;
+
+    $sql = "UPDATE usuarios SET nombre_completo='$nombre', descripcion='$descripcion', foto_perfil='$foto'
+            WHERE id=$usuario_id";
+
+    if (!mysqli_query($link, $sql)) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    error_log("Actualizando perfil del usuario $usuario_id");
+    output(['success' => true]);
+}
+
 function postRegister()
 {
     $data = json_decode(file_get_contents("php://input"), true);
@@ -241,8 +280,9 @@ function postRegister()
     $nombre = mysqli_real_escape_string($link, $nombre);
     $email = mysqli_real_escape_string($link, $email);
     $clave = mysqli_real_escape_string($link, $clave);
+    $fotoPerfil = 'perfilPredetermiando.jpg';
 
-    $sql = "INSERT INTO usuarios (nombre_completo, email, clave) VALUES ('$nombre', '$email', '$clave')";
+    $sql = "INSERT INTO usuarios (nombre_completo, email, clave, foto_perfil) VALUES ('$nombre', '$email', '$clave', '$fotoPerfil')";
     $ok = mysqli_query($link, $sql);
 
     if ($ok) {
@@ -337,8 +377,8 @@ function getMisPublicaciones() {
     $link = conectarBD();
     $sql = "SELECT p.*, u.nombre_completo AS nombre_usuario
             FROM publicaciones p
-            JOIN usuarios u ON p.id_usuario = u.id
-            WHERE p.id_usuario = $id_usuario
+            JOIN usuarios u ON p.usuario_id = u.id
+            WHERE p.usuario_id = $id_usuario
             ORDER BY p.id DESC";
     $res = mysqli_query($link, $sql);
 
@@ -365,13 +405,14 @@ function patchPublicaciones($id) {
     $usuario_id = $payload->uid;
 
     $sql = "UPDATE publicaciones SET titulo='$titulo', contenido='$contenido'
-            WHERE id=$id AND usuarios_id=$usuario_id";
+            WHERE id=$id AND usuario_id=$usuario_id";
 
     if (!mysqli_query($link, $sql)) {
         outputError(500);
     }
 
     mysqli_close($link);
+    error_log("Editando publicación ID: $id por usuario $usuario_id");
     output(['success' => true]);
 }
 
@@ -381,10 +422,90 @@ function deletePublicaciones($id) {
     $usuario_id = $payload->uid;
 
     $link = conectarBD();
-    $sql = "DELETE FROM publicaciones WHERE id=$id AND usuarios_id=$usuario_id";
+    $sql = "DELETE FROM publicaciones WHERE id=$id AND usuario_id=$usuario_id";
     $res = mysqli_query($link, $sql);
 
     if (!$res) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+}
+
+function postComentarios() {
+    $payload = requiereLogin();
+    $data = json_decode(file_get_contents("php://input"), true);
+    $contenido = $data['contenido'] ?? '';
+    $id_publicacion = $data['id_publicacion'] ?? null;
+
+    if (!$id_publicacion || !$contenido) {
+        outputError(400);
+    }
+
+    $link = conectarBD();
+    $contenido = mysqli_real_escape_string($link, $contenido);
+    $id_publicacion = (int) $id_publicacion;
+    $id_usuario = $payload->uid;
+
+    $sql = "INSERT INTO comentarios (id_publicacion, id_usuario, contenido)
+            VALUES ($id_publicacion, $id_usuario, '$contenido')";
+    
+    if (!mysqli_query($link, $sql)) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+}
+
+function getComentariosConParametros($id_publicacion) {
+    $link = conectarBD();
+    $id_publicacion = (int) $id_publicacion;
+
+    $sql = "SELECT c.id, c.contenido, c.fecha, c.id_usuario, u.nombre_completo AS autor
+            FROM comentarios c
+            JOIN usuarios u ON c.id_usuario = u.id
+            WHERE c.id_publicacion = $id_publicacion
+            ORDER BY c.fecha ASC";
+
+    $res = mysqli_query($link, $sql);
+    if (!$res) {
+        outputError(500);
+    }
+
+    $comentarios = [];
+    while ($fila = mysqli_fetch_assoc($res)) {
+        $comentarios[] = $fila;
+    }
+
+    mysqli_free_result($res);
+    mysqli_close($link);
+    output($comentarios);
+}
+
+function deleteComentarios($id) {
+    $payload = requiereLogin();
+    $id = (int) $id;
+    $id_usuario = $payload->uid;
+
+    $link = conectarBD();
+
+    // Verificar que el comentario exista y sea del usuario
+    $sqlCheck = "SELECT * FROM comentarios WHERE id = $id AND id_usuario = $id_usuario";
+    $resCheck = mysqli_query($link, $sqlCheck);
+    
+    if (mysqli_num_rows($resCheck) === 0) {
+        mysqli_close($link);
+        outputError(403); // No autorizado o no existe
+    }
+
+    // Eliminar el comentario
+    $sql = "DELETE FROM comentarios WHERE id = $id AND id_usuario = $id_usuario";
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        mysqli_close($link);
         outputError(500);
     }
 

@@ -29,6 +29,7 @@
         <button class="btn btn-sm btn-warning me-2" (click)="editarPublicacion(pub)">Editar</button>
         <button class="btn btn-sm btn-danger" (click)="eliminarPublicacion(pub.id)">Eliminar</button>
       </ng-container>
+      <app-comentario [idPublicacion]="pub.id"></app-comentario>
     </div>
   </div>
 </div>
