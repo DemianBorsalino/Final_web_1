@@ -12,9 +12,8 @@ import { FormsModule } from '@angular/forms';
 })
 export class PerfilComponent {
   usuario: any = null;
-  urlImagenPerfil: string | null = null;
-  imagenSeleccionada: File | null = null;
   publicaciones: any[] = [];
+  imagenesDisponibles: any[] = [];
 
   constructor(private http: HttpClient) {
     this.cargarPublicaciones();
@@ -23,15 +22,8 @@ export class PerfilComponent {
   ngOnInit() {
     this.obtenerUsuario();
     this.cargarPublicaciones();
+    this.cargarImagenesDisponibles();
   }
-
-  seleccionarImagen(event: any) {
-  const file = event.target.files[0];
-  if (file) {
-    this.imagenSeleccionada = file;
-  }
-}
-
 
   obtenerUsuario() {
     const token = localStorage.getItem('jwt');
@@ -40,36 +32,35 @@ export class PerfilComponent {
     const headers = { Authorization: 'Bearer ' + token };
     this.http.get<any>(environment.apiurl + 'perfil', { headers })
       .subscribe({
-        next: res => {
-          this.usuario = res;
-          if (res.foto_perfil) {
-            this.urlImagenPerfil = environment.apiurl + 'adicional/' + res.foto_perfil;
-          } else {
-            this.urlImagenPerfil = 'perfilPredeterminado';
-          }
-        },
+        next: res => this.usuario = res,
         error: err => console.error('Error al obtener perfil de usuario', err)
       });
   }
+
+  cargarImagenesDisponibles() {
+  this.http.get<any[]>(environment.apiurl + 'imagenes-perfil')
+    .subscribe({
+      next: res => this.imagenesDisponibles = res,
+      error: err => console.error('Error al cargar imágenes de perfil', err)
+    });
+}
+
   guardarCambios() {
     const token = localStorage.getItem('jwt');
     if (!token) return;
 
-    const formData = new FormData();
-    formData.append('nombre_completo', this.usuario.nombre_completo);
-    formData.append('descripcion', this.usuario.descripcion || '');
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    };
 
-    if (this.imagenSeleccionada) {
-      formData.append('foto_perfil', this.imagenSeleccionada);
-    }
+    console.log('Enviando datos al servidor:', this.usuario);
 
-    const headers = { 'Authorization': 'Bearer ' + token  };
-    this.http.post<any>(environment.apiurl + 'usuario', formData, { headers })
+    this.http.patch<any>(environment.apiurl + 'usuario', this.usuario, { headers })
       .subscribe({
         next: res => {
           console.log('Perfil actualizado:', res);
           alert('Perfil actualizado correctamente');
-          this.obtenerUsuario();
         },
         error: err => {
           console.error('Error al actualizar perfil', err);

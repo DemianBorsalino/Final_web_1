@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-07-2025 a las 19:49:58
+-- Tiempo de generación: 19-07-2025 a las 09:27:25
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -47,6 +47,26 @@ INSERT INTO `comentarios` (`id`, `id_publicacion`, `id_usuario`, `contenido`, `f
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `fotos_perfil`
+--
+
+CREATE TABLE `fotos_perfil` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+--
+-- Volcado de datos para la tabla `fotos_perfil`
+--
+
+INSERT INTO `fotos_perfil` (`id`, `nombre`) VALUES
+(1, 'avatar0.png'),
+(2, 'avatar1.png'),
+(3, 'avatar2.png');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `publicaciones`
 --
 
@@ -78,7 +98,7 @@ CREATE TABLE `usuarios` (
   `email` varchar(255) NOT NULL,
   `clave` varchar(255) NOT NULL,
   `nombre_completo` varchar(255) NOT NULL,
-  `foto_perfil` varchar(255) DEFAULT NULL,
+  `id_foto` int(11) DEFAULT NULL,
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 
@@ -86,10 +106,10 @@ CREATE TABLE `usuarios` (
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `email`, `clave`, `nombre_completo`, `foto_perfil`, `descripcion`) VALUES
-(1, 'admin@admin.com', 'admin123', 'Administrador de Sistema', 'perfilPredeterminado.jpg', NULL),
-(2, 'Algunmail@gmail.com', 'TEST', 'Ricardo Milos', 'perfilPredeterminado.jpg', NULL),
-(3, 'Pitonlover@Sexmail.com', 'pito', 'Gordo de pitones', 'perfilPredeterminado.jpg', NULL);
+INSERT INTO `usuarios` (`id`, `email`, `clave`, `nombre_completo`, `id_foto`, `descripcion`) VALUES
+(1, 'admin@admin.com', 'admin123', 'Administrador de Sistema', 1, NULL),
+(2, 'Algunmail@gmail.com', 'TEST', 'Ricardo Milos', 1, ''),
+(3, 'Pitonlover@Sexmail.com', 'pito', 'Gordo de pitones', 0, NULL);
 
 --
 -- Índices para tablas volcadas
@@ -102,6 +122,12 @@ ALTER TABLE `comentarios`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_publicacion` (`id_publicacion`),
   ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Indices de la tabla `fotos_perfil`
+--
+ALTER TABLE `fotos_perfil`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `publicaciones`
@@ -124,6 +150,12 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `comentarios`
 --
 ALTER TABLE `comentarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `fotos_perfil`
+--
+ALTER TABLE `fotos_perfil`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --

@@ -269,6 +269,24 @@ function patchUsuario() {
     output(['success' => true]);
 }
 
+function getImagenesPerfil() {
+    $carpeta = __DIR__ . "/../adicional/Imagenes/";
+    $archivos = scandir($carpeta);
+    $imagenes = [];
+
+    foreach ($archivos as $archivo) {
+        if ($archivo !== "." && $archivo !== "..") {
+            // Omitir archivos no válidos
+            if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $archivo)) {
+                $imagenes[] = $archivo;
+            }
+        }
+    }
+
+    output($imagenes);
+}
+
+
 function postRegister()
 {
     $data = json_decode(file_get_contents("php://input"), true);

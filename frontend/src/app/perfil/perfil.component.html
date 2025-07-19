@@ -2,7 +2,11 @@
 <p>Bienvenido, esta es tu área privada.</p>
 
 <div *ngIf="usuario">
-  <img [src]="'http://localhost/miproyecto/adicional/' + usuario.foto_perfil" 
+  <!-- <img [src]="'http://localhost/miproyecto/adicional/Imagenes' + usuario.id_foto" 
+       width="120" height="120" 
+       alt="Foto de perfil" 
+       style="border-radius: 50%; border: 2px solid #ccc; margin-bottom: 1em;"> -->
+  <img [src]="'http://localhost/miproyecto/adicional/Imagenes/' + usuario.foto_nombre" 
        width="120" height="120" 
        alt="Foto de perfil" 
        style="border-radius: 50%; border: 2px solid #ccc; margin-bottom: 1em;">
@@ -30,9 +34,27 @@
 
   <label>
     Foto de perfil:
-    <input type="file" (change)="seleccionarImagen($event)" />
+    <select [(ngModel)]="usuario.id_foto" name="id_foto">
+      <option *ngFor="let imagen of imagenesDisponibles" [value]="imagen.id">
+        {{ imagen.nombre }}
+      </option>
+    </select>
   </label>
   <br>
+
+  <!-- Opcional: Mostrar miniaturas -->
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+    <div *ngFor="let imagen of imagenesDisponibles" style="text-align: center;">
+      <img [src]="'http://localhost/miproyecto/adicional/Imagenes/' + imagen.nombre"
+           [alt]="imagen.nombre"
+           width="60"
+           height="60"
+           style="border-radius: 50%; border: 1px solid #ccc;"
+      >
+      <br>
+      <small>ID: {{ imagen.id }}</small>
+    </div>
+  </div>
 
   <button type="submit">Guardar cambios</button>
 </form>
