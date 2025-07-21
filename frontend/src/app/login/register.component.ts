@@ -15,17 +15,29 @@ export class RegisterComponent {
   form: FormGroup;
   error = '';
   success = '';
+  roles: any[] = [];
 
   constructor(private fb: FormBuilder, private http: HttpClient, private router: Router) {
     this.form = this.fb.group({
       nombre: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      clave: ['', Validators.required]
+      clave: ['', Validators.required],
+      id_rol: [1, Validators.required]
+    });
+    this.http.get<any[]>(environment.apiurl + 'roles').subscribe({
+      next: (data) => {
+        this.roles = data;
+      },
+      error: () => {
+        this.error = 'Error al cargar los roles desde el servidor.';
+      }
     });
   }
 
   registrar() {
-    this.http.post(environment.apiurl + 'usuarios', this.form.value).subscribe({
+    if (this.form.invalid) return;
+    
+    this.http.post(environment.apiurl + 'register', this.form.value).subscribe({
       next: () => {
         this.success = 'Usuario registrado correctamente. Ahora podés iniciar sesión.';
         this.router.navigate(['/login']); // redirige al login

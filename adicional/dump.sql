@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-07-2025 a las 09:27:25
+-- Tiempo de generación: 19-07-2025 a las 20:00:09
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -60,9 +60,15 @@ CREATE TABLE `fotos_perfil` (
 --
 
 INSERT INTO `fotos_perfil` (`id`, `nombre`) VALUES
-(1, 'avatar0.png'),
-(2, 'avatar1.png'),
-(3, 'avatar2.png');
+(1, 'avatar1.png'),
+(2, 'avatar2.png'),
+(3, 'avatar3.png'),
+(4, 'avatar4.png'),
+(5, 'avatar5.png'),
+(6, 'avatar6.png'),
+(7, 'avatar7.png'),
+(8, 'avatar8.png'),
+(9, 'avatar9.png');
 
 -- --------------------------------------------------------
 
@@ -90,6 +96,25 @@ INSERT INTO `publicaciones` (`id`, `usuario_id`, `titulo`, `contenido`, `fecha`)
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+--
+-- Volcado de datos para la tabla `roles`
+--
+
+INSERT INTO `roles` (`id`, `nombre`) VALUES
+(1, 'usuario'),
+(2, 'admin');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `usuarios`
 --
 
@@ -99,17 +124,18 @@ CREATE TABLE `usuarios` (
   `clave` varchar(255) NOT NULL,
   `nombre_completo` varchar(255) NOT NULL,
   `id_foto` int(11) DEFAULT NULL,
-  `descripcion` text DEFAULT NULL
+  `descripcion` text DEFAULT NULL,
+  `id_rol` int(11) DEFAULT 2
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `email`, `clave`, `nombre_completo`, `id_foto`, `descripcion`) VALUES
-(1, 'admin@admin.com', 'admin123', 'Administrador de Sistema', 1, NULL),
-(2, 'Algunmail@gmail.com', 'TEST', 'Ricardo Milos', 1, ''),
-(3, 'Pitonlover@Sexmail.com', 'pito', 'Gordo de pitones', 0, NULL);
+INSERT INTO `usuarios` (`id`, `email`, `clave`, `nombre_completo`, `id_foto`, `descripcion`, `id_rol`) VALUES
+(1, 'admin@admin.com', 'admin123', 'Administrador de Sistema', 1, NULL, 2),
+(2, 'Algunmail@gmail.com', 'TEST', 'Ricardo Milos', 1, 'asfasf', 1),
+(3, 'Pitonlover@Sexmail.com', 'pito', 'Gordo de pitones', 1, NULL, 1);
 
 --
 -- Índices para tablas volcadas
@@ -137,10 +163,17 @@ ALTER TABLE `publicaciones`
   ADD KEY `usuario_id` (`usuario_id`);
 
 --
+-- Indices de la tabla `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_rol` (`id_rol`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -156,13 +189,19 @@ ALTER TABLE `comentarios`
 -- AUTO_INCREMENT de la tabla `fotos_perfil`
 --
 ALTER TABLE `fotos_perfil`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `publicaciones`
 --
 ALTER TABLE `publicaciones`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de la tabla `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -186,6 +225,12 @@ ALTER TABLE `comentarios`
 --
 ALTER TABLE `publicaciones`
   ADD CONSTRAINT `publicaciones_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`);
+
+--
+-- Filtros para la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

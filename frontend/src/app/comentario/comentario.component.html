@@ -7,7 +7,7 @@
       <small>({{ c.fecha | date:'short' }})</small>
 
       <!-- Botón eliminar solo visible si el comentario es del usuario -->
-      <button *ngIf="c.id_usuario === authService.obtenerDatosUsuario()?.uid"
+      <button *ngIf="c.id_usuario === authService.obtenerDatosUsuario()?.uid || authService.esAdmin()"
               (click)="eliminarComentario(c.id)">
         Eliminar
       </button>

@@ -82,7 +82,7 @@ function autenticar($email, $clave)
     $link = conectarBD();
     $email = mysqli_real_escape_string($link, $email);
     $clave = mysqli_real_escape_string($link, $clave);
-    $sql = "SELECT id, nombre_completo FROM usuarios WHERE email='$email' AND clave='$clave'";
+    $sql = "SELECT id, nombre_completo, id_rol FROM usuarios WHERE email='$email' AND clave='$clave'";
     $resultado = mysqli_query($link, $sql);
     if ($resultado === false) {
         outputError(500, "Falló la consulta: " . mysqli_error($link));
@@ -93,6 +93,7 @@ function autenticar($email, $clave)
         $ret = [
             'id'     => $fila['id'],
             'nombre' => $fila['nombre_completo'],
+            'rol'    => $fila['id_rol'],
         ];
     }
     mysqli_free_result($resultado);
@@ -130,24 +131,7 @@ function getSysinfo()
 }
 
 
-function getPerfil()
-{
-    $payload = requiereLogin();
-    $id = $payload->uid;
 
-    $link = conectarBD();
-    $sql = "SELECT id, nombre_completo, email, descripcion, foto_perfil FROM usuarios WHERE id = $id";
-    $res = mysqli_query($link, $sql);
-
-    if ($fila = mysqli_fetch_assoc($res)) {
-        output($fila);
-    } else {
-        outputError(404, "Usuario no encontrado");
-    }
-
-    mysqli_free_result($res);
-    mysqli_close($link);
-}
 
 function postLogin()
 {
@@ -160,6 +144,7 @@ function postLogin()
     $payload = [
         'uid'       => $logged['id'],
         'nombre'    => $logged['nombre'],
+        'rol'       => $logged['rol'],
         'exp'       => time() + JWT_EXP,
     ];
     $jwt = JWT::encode($payload, JWT_KEY, JWT_ALG);
@@ -174,17 +159,40 @@ function patchLogin()
     output(['jwt'=>$jwt]);
 }
 
+function getPerfil()
+{
+    $payload = requiereLogin();
+    $id = $payload->uid;
+
+    $link = conectarBD();
+    $sql = "SELECT u.id, u.nombre_completo, u.email, u.descripcion, f.nombre AS foto_perfil
+            FROM usuarios u
+            LEFT JOIN fotos_perfil f ON u.id_foto = f.id
+            WHERE u.id = $id";
+    $res = mysqli_query($link, $sql);
+
+    if ($fila = mysqli_fetch_assoc($res)) {
+        output($fila);
+    } else {
+        outputError(404, "Usuario no encontrado");
+    }
+
+    mysqli_free_result($res);
+    mysqli_close($link);
+}
+
 function getUsuarios()
 {
     $link = conectarBD();
-    $sql = "SELECT id, email, nombre_completo, foto_perfil, descripcion FROM usuarios";
+    $sql = "SELECT u.id, u.email, u.nombre_completo, u.descripcion, f.nombre AS foto_perfil
+            FROM usuarios u
+            LEFT JOIN fotos_perfil f ON u.id_foto = f.id";
     $resultado = mysqli_query($link, $sql);
 
     $usuarios = [];
     while ($fila = mysqli_fetch_assoc($resultado)) {
         $id_usuario = $fila['id'];
 
-        // Obtener publicaciones de este usuario
         $sqlPub = "SELECT id FROM publicaciones WHERE usuario_id = $id_usuario";
         $resPub = mysqli_query($link, $sqlPub);
         $publicaciones = [];
@@ -203,11 +211,15 @@ function getUsuarios()
     output($usuarios);
 }
 
+
 function getUsuario($id) {
     $link = conectarBD();
     $id = mysqli_real_escape_string($link, $id);
 
-    $sql = "SELECT id, email, nombre_completo, foto_perfil, descripcion FROM usuarios WHERE id = $id";
+    $sql = "SELECT u.id, u.email, u.nombre_completo, u.descripcion, f.nombre AS foto_perfil
+            FROM usuarios u
+            LEFT JOIN fotos_perfil f ON u.id_foto = f.id
+            WHERE u.id = $id";
     $res = mysqli_query($link, $sql);
 
     if ($fila = mysqli_fetch_assoc($res)) {
@@ -219,6 +231,7 @@ function getUsuario($id) {
     mysqli_free_result($res);
     mysqli_close($link);
 }
+
 
 
 function postUsuarios()
@@ -249,16 +262,21 @@ function patchUsuario() {
 
     $nombre = $data['nombre_completo'] ?? '';
     $descripcion = $data['descripcion'] ?? '';
-    $foto = $data['foto_perfil'] ?? '';
+    $id_foto = $data['id_foto'] ?? null;
 
     $link = conectarBD();
     $nombre = mysqli_real_escape_string($link, $nombre);
     $descripcion = mysqli_real_escape_string($link, $descripcion);
-    $foto = mysqli_real_escape_string($link, $foto);
     $usuario_id = $payload->uid;
 
-    $sql = "UPDATE usuarios SET nombre_completo='$nombre', descripcion='$descripcion', foto_perfil='$foto'
-            WHERE id=$usuario_id";
+    $sql = "UPDATE usuarios SET nombre_completo='$nombre', descripcion='$descripcion'";
+
+    if ($id_foto !== null) {
+        $id_foto = intval($id_foto);
+        $sql .= ", id_foto=$id_foto";
+    }
+
+    $sql .= " WHERE id=$usuario_id";
 
     if (!mysqli_query($link, $sql)) {
         outputError(500);
@@ -269,22 +287,23 @@ function patchUsuario() {
     output(['success' => true]);
 }
 
-function getImagenesPerfil() {
-    $carpeta = __DIR__ . "/../adicional/Imagenes/";
-    $archivos = scandir($carpeta);
-    $imagenes = [];
 
-    foreach ($archivos as $archivo) {
-        if ($archivo !== "." && $archivo !== "..") {
-            // Omitir archivos no válidos
-            if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $archivo)) {
-                $imagenes[] = $archivo;
-            }
-        }
+function getFotosPerfil() {
+    $link = conectarBD();
+    $sql = "SELECT id, nombre FROM fotos_perfil";
+    $res = mysqli_query($link, $sql);
+
+    $fotos = [];
+    while ($fila = mysqli_fetch_assoc($res)) {
+        $fotos[] = $fila;
     }
 
-    output($imagenes);
+    mysqli_free_result($res);
+    mysqli_close($link);
+
+    output($fotos);
 }
+
 
 
 function postRegister()
@@ -293,14 +312,17 @@ function postRegister()
     $nombre = $data['nombre'];
     $email = $data['email'];
     $clave = $data['clave'];
+    $id_rol = $data['id_rol'];
 
     $link = conectarBD();
     $nombre = mysqli_real_escape_string($link, $nombre);
     $email = mysqli_real_escape_string($link, $email);
     $clave = mysqli_real_escape_string($link, $clave);
-    $fotoPerfil = 'perfilPredetermiando.jpg';
+    $id_rol = mysqli_real_escape_string($link, $id_rol);
+    $id_foto = 1;
 
-    $sql = "INSERT INTO usuarios (nombre_completo, email, clave, foto_perfil) VALUES ('$nombre', '$email', '$clave', '$fotoPerfil')";
+    $sql = "INSERT INTO usuarios (nombre_completo, email, clave, id_foto, id_rol) 
+            VALUES ('$nombre', '$email', '$clave', $id_foto, $id_rol)";
     $ok = mysqli_query($link, $sql);
 
     if ($ok) {
@@ -311,6 +333,22 @@ function postRegister()
 
     mysqli_close($link);
 }
+
+function getRoles()
+{
+    $link = conectarBD();
+    $sql = "SELECT id, nombre FROM roles";
+    $res = mysqli_query($link, $sql);
+    $roles = [];
+
+    while ($row = mysqli_fetch_assoc($res)) {
+        $roles[] = $row;
+    }
+
+    mysqli_close($link);
+    output($roles);
+}
+
 
 function getPublicaciones() {
     $link = conectarBD();
@@ -339,9 +377,13 @@ function getPublicaciones() {
 function postPublicaciones() {
     $payload = requiereLogin(); 
     $data = json_decode(file_get_contents("php://input"), true);
-    $titulo = $data['titulo'] ?? '';
-    $contenido = $data['contenido'] ?? '';
+    $titulo = trim($data['titulo'] ?? '');
+    $contenido = trim($data['contenido'] ?? '');
     $id_usuario = $payload->uid;
+
+    if ($titulo === '' || $contenido === '') {
+        outputError(400, 'El título y el contenido no pueden estar vacíos');
+    }
 
     $link = conectarBD();
     $titulo = mysqli_real_escape_string($link, $titulo);
@@ -349,13 +391,11 @@ function postPublicaciones() {
 
     $sql = "INSERT INTO publicaciones (titulo, contenido, usuario_id) VALUES ('$titulo', '$contenido', $id_usuario)";
     if (!mysqli_query($link, $sql)) {
-        // Eliminá cualquier echo, y usá solo esto para errores
         outputError(500);
     }
 
     mysqli_close($link);
 
-    // 🔥 Asegurate de que esto esté limpio
     output(['success' => true]);
 }
 
@@ -413,8 +453,12 @@ function getMisPublicaciones() {
 function patchPublicaciones($id) {
     $payload = requiereLogin();
     $data = json_decode(file_get_contents("php://input"), true);
-    $titulo = $data['titulo'] ?? '';
-    $contenido = $data['contenido'] ?? '';
+    $titulo = trim($data['titulo'] ?? '');
+    $contenido = trim($data['contenido'] ?? '');
+
+    if ($titulo === '' || $contenido === '') {
+        outputError(400, 'El título y el contenido no pueden estar vacíos');
+    }
 
     $link = conectarBD();
     $titulo = mysqli_real_escape_string($link, $titulo);
@@ -434,6 +478,23 @@ function patchPublicaciones($id) {
     output(['success' => true]);
 }
 
+/*function deletePublicaciones($id) {
+    $payload = requiereLogin();
+    $id = mysqli_real_escape_string(conectarBD(), $id);
+    $usuario_id = $payload->uid;
+
+    $link = conectarBD();
+    $sql = "DELETE FROM publicaciones WHERE id=$id AND usuario_id=$usuario_id";
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+}*/
+ /*
 function deletePublicaciones($id) {
     $payload = requiereLogin();
     $id = mysqli_real_escape_string(conectarBD(), $id);
@@ -449,7 +510,58 @@ function deletePublicaciones($id) {
 
     mysqli_close($link);
     output(['success' => true]);
+}  */
+
+
+function deletePublicaciones($id) {
+    $payload = requiereLogin();
+    $usuario_id = $payload->uid;
+    $rol = $payload->rol; // ← Asegurate de que esto exista
+
+    $link = conectarBD();
+    $id = mysqli_real_escape_string($link, $id);
+    $usuario_id = mysqli_real_escape_string($link, $usuario_id);
+
+    // Si es admin, puede borrar cualquier publicación
+    if ((int)$rol === 2) {
+        $sql = "DELETE FROM publicaciones WHERE id = $id";
+    } else {
+        // Solo puede borrar publicaciones propias
+        $sql = "DELETE FROM publicaciones WHERE id = $id AND usuario_id = $usuario_id";
+    }
+
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
 }
+
+/*function deleteTodasLasPublicaciones() {
+    $payload = requiereLogin();
+    $rol = $payload->rol;
+
+    // Solo el rol 2 (admin) puede hacer esto
+    if ($rol !== 2) {
+        outputError(403, "No tenés permiso para borrar todas las publicaciones.");
+    }
+
+    $link = conectarBD();
+    $sql = "DELETE FROM publicaciones";
+    $res = mysqli_query($link, $sql);
+
+    if (!$res) {
+        outputError(500, "No se pudieron borrar las publicaciones.");
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+}*/
+
+
 
 function postComentarios() {
     $payload = requiereLogin();
@@ -502,7 +614,7 @@ function getComentariosConParametros($id_publicacion) {
     output($comentarios);
 }
 
-function deleteComentarios($id) {
+/*function deleteComentarios($id) {
     $payload = requiereLogin();
     $id = (int) $id;
     $id_usuario = $payload->uid;
@@ -525,6 +637,31 @@ function deleteComentarios($id) {
     if (!$res) {
         mysqli_close($link);
         outputError(500);
+    }
+
+    mysqli_close($link);
+    output(['success' => true]);
+} */
+
+function deleteComentarios($id) {
+    $payload = requiereLogin();
+    $id = (int) $id;
+    $id_usuario = $payload->uid;
+    $rol = (int) $payload->rol;
+
+    $link = conectarBD();
+
+    if ($rol === 2) {
+        $sql = "DELETE FROM comentarios WHERE id = $id";
+    } else {
+        $sql = "DELETE FROM comentarios WHERE id = $id AND id_usuario = $id_usuario";
+    }
+
+    $res = mysqli_query($link, $sql);
+
+    if (!$res || mysqli_affected_rows($link) === 0) {
+        mysqli_close($link);
+        outputError(403, "No se pudo borrar el comentario. No existe o no tenés permisos.");
     }
 
     mysqli_close($link);

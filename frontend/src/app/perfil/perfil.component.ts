@@ -38,11 +38,11 @@ export class PerfilComponent {
   }
 
   cargarImagenesDisponibles() {
-  this.http.get<any[]>(environment.apiurl + 'imagenes-perfil')
-    .subscribe({
-      next: res => this.imagenesDisponibles = res,
-      error: err => console.error('Error al cargar imágenes de perfil', err)
-    });
+    this.http.get<any[]>(environment.apiurl + 'FotosPerfil')
+      .subscribe({
+        next: res => this.imagenesDisponibles = res,
+        error: err => console.error('Error al cargar imágenes de perfil', err)
+      });
 }
 
   guardarCambios() {

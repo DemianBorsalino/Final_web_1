@@ -16,6 +16,15 @@
     <input type="password" class="form-control" formControlName="clave">
   </div>
 
+  <div class="mb-3">
+    <label>Rol</label>
+    <select class="form-control" formControlName="id_rol">
+      <option [ngValue]="null" disabled selected>Seleccioná un rol</option>
+      <option *ngFor="let rol of roles" [value]="rol.id">{{ rol.nombre }}</option>
+    </select>
+  </div>
+
+
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
   <div *ngIf="success" class="alert alert-success">{{ success }}</div>
 

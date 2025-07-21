@@ -25,8 +25,13 @@
       <h5 class="card-title">{{ pub.titulo }}</h5>
       <p class="card-text">{{ pub.contenido }}</p>
       <small class="text-muted">Por: {{ pub.autor }}</small>
+      <!-- Mostrar botón Editar solo si el usuario es el autor -->
       <ng-container *ngIf="authService.obtenerDatosUsuario()?.uid === pub.usuario_id">
         <button class="btn btn-sm btn-warning me-2" (click)="editarPublicacion(pub)">Editar</button>
+      </ng-container>
+
+      <!-- Mostrar botón Eliminar si es el autor o si es admin -->
+      <ng-container *ngIf="authService.obtenerDatosUsuario()?.uid === pub.usuario_id || authService.esAdmin()">
         <button class="btn btn-sm btn-danger" (click)="eliminarPublicacion(pub.id)">Eliminar</button>
       </ng-container>
       <app-comentario [idPublicacion]="pub.id"></app-comentario>

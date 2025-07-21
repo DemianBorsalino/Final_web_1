@@ -41,4 +41,18 @@ export class AuthService {
       return null;
     }
   }
+
+  tieneRolId(rolId: number): boolean {
+    const datos = this.obtenerDatosUsuario();
+    return Number(datos?.rol)=== rolId;
+  }
+
+  esAdmin(): boolean {
+    return this.tieneRolId(2); // ID del rol admin
+  }
+
+  esUsuario(): boolean {
+    return this.tieneRolId(1); // ID del rol usuario
+  }
+
 }

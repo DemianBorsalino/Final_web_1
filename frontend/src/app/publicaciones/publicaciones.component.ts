@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { ComentarioComponent } from '../comentario/comentario.component';
+import { Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-publicaciones',
@@ -18,8 +19,8 @@ export class PublicacionesComponent {
 
   constructor(private fb: FormBuilder, private http: HttpClient, public authService: AuthService ) {
     this.formulario = this.fb.group({
-      titulo: [''],
-      contenido: ['']
+      titulo: ['',Validators.required],
+      contenido: ['',Validators.required]
     });
 
     this.cargarPublicaciones();
@@ -54,6 +55,11 @@ export class PublicacionesComponent {
     if (!token) return;
 
     const headers = { Authorization: 'Bearer ' + token };
+
+     if (this.formulario.invalid) {
+        alert('Título y contenido son obligatorios');
+        return;
+      }
 
     if (this.editarId) {
       // Modo edición
